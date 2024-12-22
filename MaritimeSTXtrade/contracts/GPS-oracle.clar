@@ -7,6 +7,8 @@
 (define-constant err-unauthorized-oracle (err u102))
 (define-constant err-vessel-not-found (err u103))
 (define-constant err-outside-geofence (err u104))
+(define-constant err-invalid-input (err u105))
+(define-constant err-invalid-zone-type (err u106))
 
 ;; Data Maps
 (define-map authorized-oracles 
@@ -24,6 +26,22 @@
     }
 )
 
+;; Input Validation Functions
+(define-private (is-valid-zone-type (zone-type (string-ascii 20)))
+    (or
+        (is-eq zone-type "port")
+        (is-eq zone-type "trading")
+        (is-eq zone-type "restricted")
+    )
+)
+
+(define-private (is-valid-string-length (str (string-utf8 36)))
+    (and 
+        (>= (len str) u1)
+        (<= (len str) u36)
+    )
+)
+
 ;; Helper Functions
 (define-private (calculate-distance-simplified 
     (lat1 int) 
@@ -32,7 +50,6 @@
     (lon2 int))
     ;; Simplified distance calculation using Manhattan distance
     ;; Returns approximate distance in coordinate units
-    ;; Note: This is a rough approximation suitable for basic proximity checks
     (let
         (
             (lat-diff (if (> lat2 lat1)
@@ -50,6 +67,8 @@
 (define-public (register-oracle (oracle principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        ;; Check if oracle is not already registered
+        (asserts! (is-none (map-get? authorized-oracles {oracle: oracle})) err-invalid-input)
         (map-set authorized-oracles
             {oracle: oracle}
             {is-active: true}
@@ -64,9 +83,11 @@
     (new-longitude int))
     (let
         ((oracle tx-sender))
+        ;; Input validation
+        (asserts! (is-valid-string-length vessel-id) err-invalid-input)
         (asserts! (is-some (map-get? authorized-oracles {oracle: oracle})) err-unauthorized-oracle)
-        ;; Define coordinate bounds (-90 to +90 for latitude, -180 to +180 for longitude)
-        ;; Using regular integers multiplied by 1000000 for precision
+        
+        ;; Coordinate validation
         (asserts! (and 
             (>= new-latitude (* -90 1000000))
             (<= new-latitude (* 90 1000000))
@@ -93,6 +114,17 @@
     (zone-type (string-ascii 20)))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        ;; Input validation
+        (asserts! (is-valid-string-length zone-id) err-invalid-input)
+        (asserts! (is-valid-zone-type zone-type) err-invalid-zone-type)
+        (asserts! (> radius u0) err-invalid-input)
+        (asserts! (and 
+            (>= latitude (* -90 1000000))
+            (<= latitude (* 90 1000000))
+            (>= longitude (* -180 1000000))
+            (<= longitude (* 180 1000000))
+        ) err-invalid-coordinates)
+        
         (map-set geofence-zones
             {zone-id: zone-id}
             {
@@ -111,18 +143,21 @@
     (vessel-latitude int)
     (vessel-longitude int)
     (zone-id (string-utf8 36)))
-    (match (map-get? geofence-zones {zone-id: zone-id})
-        zone-data
-        (let
-            ((distance (calculate-distance-simplified
-                vessel-latitude
-                vessel-longitude
-                (get center-latitude zone-data)
-                (get center-longitude zone-data)
-            )))
-            (<= distance (get radius zone-data))
-        )
-        false
+    (begin
+        (asserts! (is-valid-string-length zone-id) err-invalid-input)
+        (ok (match (map-get? geofence-zones {zone-id: zone-id})
+            zone-data
+            (let
+                ((distance (calculate-distance-simplified
+                    vessel-latitude
+                    vessel-longitude
+                    (get center-latitude zone-data)
+                    (get center-longitude zone-data)
+                )))
+                (<= distance (get radius zone-data))
+            )
+            false
+        ))
     )
 )
 
