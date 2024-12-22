@@ -63,10 +63,8 @@
     (new-latitude int)
     (new-longitude int))
     (let
-        ((oracle tx-sender)
-         (vessel-data (contract-call? .Maritime-Trading get-vessel-by-id vessel-id)))
+        ((oracle tx-sender))
         (asserts! (is-some (map-get? authorized-oracles {oracle: oracle})) err-unauthorized-oracle)
-        (asserts! (is-some vessel-data) err-vessel-not-found)
         ;; Define coordinate bounds (-90 to +90 for latitude, -180 to +180 for longitude)
         ;; Using regular integers multiplied by 1000000 for precision
         (asserts! (and 
@@ -77,14 +75,12 @@
         ) err-invalid-coordinates)
         
         ;; Update location in the main contract
-        (as-contract 
-            (contract-call? 
-                .Maritime-Trading 
-                update-vessel-location 
-                vessel-id 
-                new-latitude 
-                new-longitude
-            )
+        (contract-call? 
+            .Maritime-Trading 
+            update-vessel-location 
+            vessel-id 
+            new-latitude 
+            new-longitude
         )
     )
 )

@@ -21,6 +21,11 @@
     }
 )
 
+(define-map vessel-owner-index 
+    { owner: principal } 
+    { vessel-id: (string-utf8 36) }
+)
+
 (define-map trade-agreements
     { trade-id: (string-utf8 36) }
     {
@@ -54,6 +59,10 @@
                 is-active: true
             }
         )
+        (map-set vessel-owner-index 
+            {owner: tx-sender} 
+            {vessel-id: vessel-id}
+        )
         (ok true)
     )
 )
@@ -68,8 +77,8 @@
     (completion-longitude int))
     (let
         ((seller tx-sender))
-        (asserts! (is-some (get-vessel-by-owner seller)) err-not-registered)
-        (asserts! (is-some (get-vessel-by-owner buyer)) err-not-registered)
+        (asserts! (is-some (get-vessel-for-owner seller)) err-not-registered)
+        (asserts! (is-some (get-vessel-for-owner buyer)) err-not-registered)
         (map-set trade-agreements
             {trade-id: trade-id}
             {
@@ -98,11 +107,15 @@
     )
 )
 
+(define-read-only (get-vessel-by-id (vessel-id (string-utf8 36)))
+    (map-get? vessels {vessel-id: vessel-id})
+)
+
 (define-read-only (get-trade-agreement (trade-id (string-utf8 36)))
     (map-get? trade-agreements {trade-id: trade-id})
 )
 
-;; Update vessel location - can only be called by the GPS Oracle contract
+;; Add location update function for GPS Oracle
 (define-public (update-vessel-location
     (vessel-id (string-utf8 36))
     (new-latitude int)
@@ -110,7 +123,7 @@
     (let
         ((vessel (map-get? vessels {vessel-id: vessel-id})))
         (asserts! (is-some vessel) err-not-registered)
-        (asserts! (is-eq contract-caller .GPS-oracle) err-owner-only)
+        (asserts! (is-eq contract-caller .GPS-oracle) err-unauthorized-caller)
         
         (map-set vessels
             {vessel-id: vessel-id}
