@@ -9,6 +9,8 @@
 (define-constant err-outside-geofence (err u104))
 (define-constant err-invalid-input (err u105))
 (define-constant err-invalid-zone-type (err u106))
+(define-constant err-invalid-oracle (err u107))
+(define-constant err-oracle-exists (err u108))
 
 ;; Data Maps
 (define-map authorized-oracles 
@@ -66,14 +68,23 @@
 ;; Public Functions
 (define-public (register-oracle (oracle principal))
     (begin
+        ;; Check that caller is contract owner
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
-        ;; Check if oracle is not already registered
-        (asserts! (is-none (map-get? authorized-oracles {oracle: oracle})) err-invalid-input)
-        (map-set authorized-oracles
+        
+        ;; Verify oracle is not tx-sender
+        (asserts! (not (is-eq oracle tx-sender)) err-invalid-oracle)
+        
+        ;; Check oracle is not null/zero address
+        (asserts! (not (is-eq oracle 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM)) err-invalid-oracle)
+        
+        ;; Check if oracle is already registered
+        (asserts! (is-none (map-get? authorized-oracles {oracle: oracle})) err-oracle-exists)
+        
+        ;; If all checks pass, register the oracle
+        (ok (map-set authorized-oracles
             {oracle: oracle}
             {is-active: true}
-        )
-        (ok true)
+        ))
     )
 )
 
