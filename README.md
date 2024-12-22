@@ -60,8 +60,8 @@ Maritime Trading Platform is a decentralized application built on the Stacks blo
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/gboigwe/maritime-trading
-cd maritime-trading
+git clone https://github.com/gboigwe/STX-MaritimeTradingPlatform
+cd STX-MaritimeTradingPlatform
 ```
 
 2. Install dependencies
