@@ -89,7 +89,7 @@ clarinet test
 
 ### Vessel Registration
 ```clarity
-(contract-call? .maritime-trading register-vessel 
+(contract-call? .Maritime-Trading register-vessel 
     "vessel-id" 
     "registration-number" 
     "vessel-type" 
@@ -98,7 +98,7 @@ clarinet test
 
 ### Create Trade Agreement
 ```clarity
-(contract-call? .maritime-trading create-trade-agreement 
+(contract-call? .Maritime-Trading create-trade-agreement 
     "trade-id" 
     'buyer-address 
     "cargo-type" 
@@ -111,22 +111,22 @@ clarinet test
 ## Project Roadmap
 
 ### Phase 1: Core Infrastructure
-- [ ] Vessel registration smart contracts
-- [ ] Basic trade agreement functionality
+- [x] Vessel registration smart contracts
+- [x] Basic trade agreement functionality
 - [ ] Initial test suite
 - [ ] Contract deployment scripts
 
 ### Phase 2: Location Services
-- [ ] GPS oracle integration
-- [ ] Location verification system
-- [ ] Geofencing implementation
-- [ ] Distance calculation utilities
+- [x] GPS oracle integration
+- [x] Location verification system
+- [x] Geofencing implementation
+- [x] Distance calculation utilities
 
 ### Phase 3: Customs & Compliance
-- [ ] Regulatory checkpoint system
-- [ ] Document verification
-- [ ] Automated compliance checks
-- [ ] Multi-jurisdiction support
+- [x] Regulatory checkpoint system
+- [x] Document verification
+- [x] Automated compliance checks
+- [x] Multi-jurisdiction support
 
 ### Phase 4: Frontend Development
 - [ ] Interactive map interface
